@@ -14,9 +14,10 @@ import { fmtKW } from "@/lib/utils";
 import {
   MOCK_PLANT, MOCK_CUSTOMERS, generateMockDailySummary,
   generateMockSyncData, generateMockMeters, generateMockAlerts,
-  generateProjectionData,
+  generateProjectionData, generateEfficiencyData,
 } from "@/lib/mock-data";
 import { TimeRangeSelector } from "@/components/time-range-selector";
+import { EfficiencyChart } from "@/components/charts/efficiency-chart";
 
 export const dynamic = "force-dynamic";
 
@@ -379,6 +380,23 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
             Consumo agregado de las {customers.length} cooperativas cliente. El área gris muestra el año previo (real).
             La línea cian es el consumo real del año actual. La línea ámbar punteada proyecta el consumo esperado
             para lo que resta del año, considerando estacionalidad y una tendencia de crecimiento del 3% interanual.
+          </p>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Eficiencia Térmica Promedio</CardTitle>
+            <Badge tone="green">Mejora continua</Badge>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <EfficiencyChart data={generateEfficiencyData(range)} />
+          <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+            Evolución de la eficiencia térmica de la central a lo largo del tiempo seleccionado.
+            Se observan caídas estacionales en verano debido a la temperatura ambiente, y un
+            crecimiento general sostenido gracias a los mantenimientos y mejoras tecnológicas.
           </p>
         </CardBody>
       </Card>

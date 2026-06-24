@@ -204,3 +204,44 @@ export function generateProjectionData(capacityMw: number, seed: number, range: 
   
   return data;
 }
+
+/** Genera datos de eficiencia térmica (crecimiento gradual) */
+export function generateEfficiencyData(range: string = "now") {
+  const years = range === "10y" ? 10 : range === "5y" ? 5 : 1;
+  const totalMonths = years * 12;
+  const data = [];
+  
+  const now = new Date();
+  const start = new Date(now.getFullYear() - years, now.getMonth(), 1);
+  
+  // Eficiencia base (arranca más baja si es hace 10 años, por mejoras tecnológicas)
+  let currentEff = 32.5; 
+  if (years === 1) currentEff = 38.2;
+  else if (years === 5) currentEff = 35.1;
+  
+  for (let i = 0; i <= totalMonths; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    
+    // Mejora gradual a lo largo de los meses
+    const improvement = 0.05 + (Math.random() * 0.04); 
+    currentEff += improvement;
+    
+    // Tope máximo teórico de esta planta
+    if (currentEff > 41.5) currentEff = 41.5 - (Math.random() * 0.2);
+    
+    // Efecto estacional: en verano (Ene, Feb, Dic) baja un poco por temperatura ambiente alta
+    const month = d.getMonth();
+    const isSummer = month === 11 || month === 0 || month === 1;
+    const tempDrop = isSummer ? 1.2 : 0;
+    
+    const noise = (Math.random() - 0.5) * 0.8;
+    
+    data.push({
+      date: dateStr,
+      efficiency: Number((currentEff - tempDrop + noise).toFixed(2)),
+    });
+  }
+  
+  return data;
+}
