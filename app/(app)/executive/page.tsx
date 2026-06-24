@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -252,7 +253,9 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <TimeRangeSelector />
+          <React.Suspense fallback={<div className="h-8 w-40 animate-pulse rounded-md bg-zinc-900" />}>
+            <TimeRangeSelector />
+          </React.Suspense>
           {useMock && <Badge tone="amber">Demo · datos ficticios</Badge>}
         </div>
       </div>
