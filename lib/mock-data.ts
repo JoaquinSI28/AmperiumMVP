@@ -169,24 +169,38 @@ export function generateMockAlerts(coopId: string) {
   }));
 }
 
-/** Genera proyecciones mensuales */
-export function generateProjectionData(capacityMw: number, seed: number) {
-  const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  const currentMonth = new Date().getMonth();
+/** Genera proyecciones continuas para el timeline */
+export function generateProjectionData(capacityMw: number, seed: number, range: string = "now") {
+  const years = range === "10y" ? 10 : range === "5y" ? 5 : 1;
+  const totalMonths = years * 12;
+  const data = [];
   const base = capacityMw * 720 * 0.4;
-
-  return months.map((month, i) => {
-    const seasonality = (i === 0 || i === 1 || i === 11 || i === 5 || i === 6) ? 1.2 : 0.9;
-    const varPrev = 1 + ((seed + i) % 15 - 7) / 100;
-    const varCurr = 1 + ((seed * 2 + i) % 15 - 7) / 100;
-    const prevYear = base * seasonality * varPrev;
-    const currBase = prevYear * 1.03;
-
-    return {
-      month,
-      previousYear: Math.round(prevYear),
-      currentYear: i <= currentMonth ? Math.round(currBase * varCurr) : null,
-      projected: i >= currentMonth ? Math.round(currBase * varCurr) : null,
-    };
-  });
+  
+  const now = new Date();
+  const start = new Date(now.getFullYear() - years, now.getMonth(), 1);
+  
+  // Generar meses históricos + 12 meses de proyección
+  for (let i = 0; i <= totalMonths + 12; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const isFuture = d > now;
+    const isCurrent = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    
+    const month = d.getMonth();
+    const seasonality = (month === 0 || month === 1 || month === 11 || month === 5 || month === 6) ? 1.2 : 0.9;
+    
+    const yearOffset = i / 12;
+    const growth = 1 + yearOffset * 0.03;
+    const noise = 1 + ((seed + i) % 15 - 7) / 100;
+    
+    const value = Math.round(base * seasonality * growth * noise);
+    
+    data.push({
+      date: dateStr,
+      real: isFuture ? null : value,
+      projected: (!isFuture && !isCurrent) ? null : value,
+    });
+  }
+  
+  return data;
 }

@@ -144,7 +144,7 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
     const installedKw = meterList.reduce((a, m) => a + Number(m.capacity_kw), 0);
     const openCount = alertList.filter((a) => !a.acknowledged_at).length;
     const seed = selected.id.charCodeAt(0) + selected.id.charCodeAt(selected.id.length - 1);
-    const projectionData = generateProjectionData(cupo > 0 ? cupo : 5, seed);
+    const projectionData = generateProjectionData(cupo > 0 ? cupo : 5, seed, range);
 
     return (
       <div className="mx-auto max-w-7xl space-y-6">
@@ -372,7 +372,8 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
         <CardBody>
           <ProjectionChart data={generateProjectionData(
             customers.reduce((a, c) => a + Number(c.cammesa_peak_capacity_mw), 0),
-            42
+            42,
+            range
           )} />
           <p className="mt-3 text-xs leading-relaxed text-zinc-500">
             Consumo agregado de las {customers.length} cooperativas cliente. El área gris muestra el año previo (real).

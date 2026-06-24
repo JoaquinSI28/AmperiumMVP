@@ -13,9 +13,8 @@ import {
 } from "recharts";
 
 type Row = {
-  month: string;
-  previousYear: number;
-  currentYear: number | null;
+  date: string;
+  real: number | null;
   projected: number | null;
 };
 
@@ -25,11 +24,16 @@ export function ProjectionChart({ data }: { data: Row[] }) {
       <ComposedChart data={data} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid stroke="#27272a" strokeDasharray="3 3" vertical={false} />
         <XAxis
-          dataKey="month"
+          dataKey="date"
           stroke="#52525b"
           fontSize={11}
           tickLine={false}
           axisLine={false}
+          minTickGap={30}
+          tickFormatter={(v) => {
+            const [y, m] = v.split("-");
+            return `${m}/${y.slice(2)}`;
+          }}
         />
         <YAxis
           stroke="#52525b"
@@ -46,41 +50,33 @@ export function ProjectionChart({ data }: { data: Row[] }) {
             borderRadius: 8,
             fontSize: 12,
           }}
+          labelFormatter={(v) => `Mes: ${v}`}
           formatter={(value, key) => [
             `${Number(value).toLocaleString("es-AR", { maximumFractionDigits: 1 })} MWh`,
-            key === "previousYear"
-              ? "Año previo"
-              : key === "currentYear"
-                ? "Año actual"
-                : "Proyectado",
+            key === "real" ? "Consumo Histórico" : "Proyección",
           ]}
         />
         <Legend
           wrapperStyle={{ fontSize: 11, color: "#a1a1aa" }}
-          iconType="rect"
+          iconType="line"
           formatter={(v) =>
-            v === "previousYear"
-              ? "Año previo (Real)"
-              : v === "currentYear"
-                ? "Año actual (YTD)"
-                : "Proyección esperada"
+            v === "real" ? "Consumo Histórico" : "Proyección (tendencia)"
           }
         />
         <Area
           type="monotone"
-          dataKey="previousYear"
-          fill="#3f3f46"
+          dataKey="real"
+          fill="#22d3ee"
           stroke="none"
-          fillOpacity={0.4}
+          fillOpacity={0.1}
           isAnimationActive={false}
         />
         <Line
           type="monotone"
-          dataKey="currentYear"
+          dataKey="real"
           stroke="#22d3ee"
-          strokeWidth={3}
-          dot={{ fill: "#22d3ee", r: 4 }}
-          activeDot={{ r: 6 }}
+          strokeWidth={2}
+          dot={false}
           isAnimationActive={false}
         />
         <Line
@@ -89,8 +85,7 @@ export function ProjectionChart({ data }: { data: Row[] }) {
           stroke="#f59e0b"
           strokeWidth={2}
           strokeDasharray="5 5"
-          dot={{ fill: "#f59e0b", r: 4 }}
-          activeDot={{ r: 6 }}
+          dot={false}
           isAnimationActive={false}
         />
       </ComposedChart>
