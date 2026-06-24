@@ -299,48 +299,6 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
         </CardBody>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Cooperativas cliente · drill-down comercial</CardTitle></CardHeader>
-        <CardBody className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {customers.map((c) => {
-            const m = coopsMarkers.find((x) => x.slug === c.slug)!;
-            const pctCupo = (m.current_mw / m.cammesa_peak_capacity_mw) * 100;
-            return (
-              <Link key={c.id} href={`/executive?coop=${c.slug}`} className="block">
-                <Card className="transition-colors hover:border-cyan-500/40">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>{c.short_name}</CardTitle>
-                      <Badge tone={pctCupo > 100 ? "red" : pctCupo > 85 ? "amber" : "cyan"}>{pctCupo.toFixed(0)}% cupo</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardBody className="space-y-3">
-                    <div className="text-xs text-zinc-400">{c.location}</div>
-                    <dl className="grid grid-cols-3 gap-3 border-t border-zinc-800 pt-3 text-xs">
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-zinc-500">Demanda</dt>
-                        <dd className="mt-0.5 font-mono text-lg text-cyan-300">{m.current_mw.toFixed(1)}</dd>
-                        <dd className="text-[10px] text-zinc-500">MW actual</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-zinc-500">Meters</dt>
-                        <dd className="mt-0.5 font-mono text-lg text-zinc-200">{m.meter_count}</dd>
-                        <dd className="text-[10px] text-zinc-500">desplegados</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-zinc-500">MRR</dt>
-                        <dd className="mt-0.5 font-mono text-lg text-green-400">{(Number(c.contract_monthly_usd) / 1000).toFixed(1)}</dd>
-                        <dd className="text-[10px] text-zinc-500">k USD/mes</dd>
-                      </div>
-                    </dl>
-                    <div className="text-[11px] uppercase tracking-wider text-amber-400">Drill-down comercial →</div>
-                  </CardBody>
-                </Card>
-              </Link>
-            );
-          })}
-        </CardBody>
-      </Card>
 
       <Card>
         <CardHeader><CardTitle>Energía generada diaria · {range === "10y" ? "Últimos 10 años" : range === "5y" ? "Últimos 5 años" : range === "1y" ? "Último año" : "Últimos 30 días"}</CardTitle></CardHeader>
