@@ -354,6 +354,26 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
         <CardHeader><CardTitle>Ingresos diarios MEM (USD millones)</CardTitle></CardHeader>
         <CardBody><RevenueBars data={revBars} /></CardBody>
       </Card>
+
+      <Card glow="amber">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Timeline de Consumo · Proyección consolidada todas las sucursales</CardTitle>
+            <Badge tone="cyan">2025 vs 2026</Badge>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <ProjectionChart data={generateProjectionData(
+            customers.reduce((a, c) => a + Number(c.cammesa_peak_capacity_mw), 0),
+            42
+          )} />
+          <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+            Consumo agregado de las {customers.length} cooperativas cliente. El área gris muestra el año previo (real).
+            La línea cian es el consumo real del año actual. La línea ámbar punteada proyecta el consumo esperado
+            para lo que resta del año, considerando estacionalidad y una tendencia de crecimiento del 3% interanual.
+          </p>
+        </CardBody>
+      </Card>
     </div>
   );
 }
