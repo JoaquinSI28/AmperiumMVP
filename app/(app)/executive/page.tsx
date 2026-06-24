@@ -15,6 +15,7 @@ import {
   generateMockSyncData, generateMockMeters, generateMockAlerts,
   generateProjectionData,
 } from "@/lib/mock-data";
+import { TimeRangeSelector } from "@/components/time-range-selector";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +25,9 @@ type Daily = { date: string; mwh_generated: number; revenue_ars: number; spot_pr
 
 const USD_ARS = 1100;
 
-export default async function ExecutivePage({ searchParams }: { searchParams: Promise<{ coop?: string }> }) {
+export default async function ExecutivePage({ searchParams }: { searchParams: Promise<{ coop?: string, range?: string }> }) {
   const supabase = await createClient();
-  const { coop: coopSlug } = await searchParams;
+  const { coop: coopSlug, range } = await searchParams;
 
   // Auth check — allow through if no user (demo mode)
   let isDemo = false;
@@ -86,7 +87,7 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
   if (useMock) {
     plant = MOCK_PLANT as Plant;
     customers = MOCK_CUSTOMERS as Customer[];
-    summary = generateMockDailySummary();
+    summary = generateMockDailySummary(range);
     syncInitial = generateMockSyncData();
     latestMwActive = 22.4;
     // Mock demand/meters/alerts per coop
@@ -250,7 +251,10 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
             Modelo dual: <strong>generación al MEM</strong> + <strong>SaaS de medición inteligente</strong> a {customers.length} cooperativas cliente.
           </p>
         </div>
-        {useMock && <Badge tone="amber">Demo · datos ficticios</Badge>}
+        <div className="flex items-center gap-3">
+          <TimeRangeSelector />
+          {useMock && <Badge tone="amber">Demo · datos ficticios</Badge>}
+        </div>
       </div>
 
       <Card>
@@ -269,7 +273,7 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
       <div>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-amber-400">Generación · Mercado Eléctrico Mayorista</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <KpiCard label="Energía generada · 30d" value={(totalMwh / 1000).toLocaleString("es-AR", { maximumFractionDigits: 1 })} unit="GWh" tone="amber" hint={`Peak ${peakMw.toFixed(1)} MW`} />
+          <KpiCard label={`Energía generada · ${range === "10y" ? "10 años" : range === "5y" ? "5 años" : range === "1y" ? "1 año" : "30d"}`} value={(totalMwh / 1000).toLocaleString("es-AR", { maximumFractionDigits: 1 })} unit="GWh" tone="amber" hint={`Peak ${peakMw.toFixed(1)} MW`} />
           <KpiCard label="Ingresos MEM" value={totalGenUsdM.toFixed(2)} unit="M USD" tone="green" hint={`Spot promedio ${avgSpot.toFixed(1)} USD/MWh`} />
           <KpiCard label="Disponibilidad" value={avgAvail.toFixed(2)} unit="%" tone={avgAvail > 95 ? "green" : "amber"} hint="Promedio del período" />
           <KpiCard label="Capacidad nominal" value={String(Number(plant!.capacity_mw))} unit="MW" tone="amber" hint={`${plant!.short_name} · gas natural`} />
@@ -346,7 +350,7 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Energía generada por día · últimos 30 días</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Energía generada diaria · {range === "10y" ? "Últimos 10 años" : range === "5y" ? "Últimos 5 años" : range === "1y" ? "Último año" : "Últimos 30 días"}</CardTitle></CardHeader>
         <CardBody><DailyBars data={dailyBars} /></CardBody>
       </Card>
 

@@ -51,47 +51,60 @@ export const MOCK_CUSTOMERS = [
   },
 ];
 
-/** Genera 30 días de resumen diario ficticio */
-export function generateMockDailySummary() {
+/**
+ * Genera resumen diario para N días.
+ * range: "now" = 30d, "1y" = 365d, "5y" = 1825d, "10y" = 3650d
+ */
+export function generateMockDailySummary(range: string = "now") {
+  const dayCount = range === "10y" ? 3650 : range === "5y" ? 1825 : range === "1y" ? 365 : 30;
   const days: {
-    date: string;
-    mwh_generated: number;
-    revenue_ars: number;
-    spot_price_avg_usd_mwh: number;
-    availability_pct: number;
-    avg_eff_pct: number;
-    peak_mw: number;
-    hours_online: number;
-    gas_consumed_m3: number;
+    date: string; mwh_generated: number; revenue_ars: number;
+    spot_price_avg_usd_mwh: number; availability_pct: number;
+    avg_eff_pct: number; peak_mw: number; hours_online: number; gas_consumed_m3: number;
   }[] = [];
 
   const now = new Date();
-  for (let i = 29; i >= 0; i--) {
+  for (let i = dayCount - 1; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
+    const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000);
 
-    const baseMwh = 400 + Math.sin(i * 0.5) * 80 + (i % 7 < 2 ? -60 : 0);
-    const spotPrice = 42 + Math.sin(i * 0.3) * 8;
+    // Estacionalidad anual (picos en verano dic-feb e invierno jun-jul para Argentina)
+    const seasonal = Math.sin((dayOfYear / 365) * Math.PI * 2 - 1.2) * 0.15;
+    // Tendencia de crecimiento interanual (~3% por año)
+    const yearOffset = (dayCount - i) / 365;
+    const growth = 1 + yearOffset * 0.03;
+    // Variación día de semana (fines de semana bajan)
+    const dow = d.getDay();
+    const weekendFactor = (dow === 0 || dow === 6) ? 0.82 : 1.0;
+    // Ruido determinístico
+    const noise = Math.sin(i * 0.73) * 0.08 + Math.cos(i * 1.37) * 0.05;
+
+    const baseMwh = 380 * growth * (1 + seasonal) * weekendFactor * (1 + noise);
+    const spotPrice = (42 + Math.sin(dayOfYear * 0.017) * 10 + Math.sin(i * 0.31) * 5) * growth;
     const revenueArs = baseMwh * spotPrice * 1100;
-    const peak = 22 + Math.sin(i * 0.4) * 5;
+    const peak = (22 + Math.sin(dayOfYear * 0.017) * 4) * growth * weekendFactor;
 
     days.push({
       date: dateStr,
       mwh_generated: Math.round(baseMwh * 10) / 10,
       revenue_ars: Math.round(revenueArs),
       spot_price_avg_usd_mwh: Math.round(spotPrice * 10) / 10,
-      availability_pct: 95 + Math.sin(i * 0.7) * 4,
+      availability_pct: Math.min(99.9, 95 + Math.sin(i * 0.7) * 4),
       avg_eff_pct: 38 + Math.sin(i * 0.6) * 3,
       peak_mw: Math.round(peak * 10) / 10,
-      hours_online: 20 + Math.floor(Math.sin(i * 0.5) * 4),
+      hours_online: Math.min(24, Math.max(16, 20 + Math.floor(Math.sin(i * 0.5) * 4))),
       gas_consumed_m3: Math.round(baseMwh * 280),
     });
   }
   return days;
 }
 
-/** Genera datos de sincronización oferta/demanda (2 horas) */
+/**
+ * Genera datos de sincronización oferta/demanda (2 horas, cada 2 min = 61 puntos).
+ * Simula una curva de generación que sigue a la demanda con un pequeño delta.
+ */
 export function generateMockSyncData() {
   const points: { ts: string; generation_mw: number; demand_mw: number }[] = [];
   const now = new Date();
@@ -99,11 +112,21 @@ export function generateMockSyncData() {
   for (let m = 120; m >= 0; m -= 2) {
     const t = new Date(now.getTime() - m * 60 * 1000);
     const ts = t.toISOString();
-    const base = 18 + Math.sin(m * 0.05) * 4;
+    const hour = t.getHours() + t.getMinutes() / 60;
+
+    // Curva de demanda realista: baja en la madrugada, sube en la mañana, pico 13-15h, baja de noche
+    const demandBase = 14 + 6 * Math.sin((hour - 6) * Math.PI / 12) + 2 * Math.sin((hour - 2) * Math.PI / 6);
+    const demandNoise = Math.sin(m * 0.15) * 0.8 + Math.cos(m * 0.23) * 0.4;
+    const demand = Math.max(8, demandBase + demandNoise);
+
+    // Generación sigue la demanda con un margen positivo y leve delay
+    const genDelta = 1.5 + Math.sin(m * 0.1) * 0.8;
+    const generation = demand + genDelta;
+
     points.push({
       ts,
-      generation_mw: Math.round((base + 2 + Math.sin(m * 0.08) * 1.5) * 100) / 100,
-      demand_mw: Math.round((base + Math.sin(m * 0.06) * 1.2) * 100) / 100,
+      generation_mw: Math.round(generation * 100) / 100,
+      demand_mw: Math.round(demand * 100) / 100,
     });
   }
   return points;
