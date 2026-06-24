@@ -223,17 +223,6 @@ export default async function ExecutivePage({ searchParams }: { searchParams: Pr
           </Card>
         </div>
 
-        <Card>
-          <CardHeader><CardTitle>Proyección de Demanda vs Histórico (MWh)</CardTitle></CardHeader>
-          <CardBody>
-            <ProjectionChart data={projectionData} />
-            <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-              El área gris representa el consumo real del año previo. La línea cian muestra el consumo
-              real del año actual hasta la fecha. La línea ámbar punteada es la proyección estimada
-              para lo que resta del año, basada en estacionalidad y tendencia de crecimiento del 3%.
-            </p>
-          </CardBody>
-        </Card>
       </div>
     );
   }
